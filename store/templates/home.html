@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <section class="hero-section">
+        <h1>Welcome to PCForge</h1>
+        <p>Your ultimate destination for custom PC building and components.</p>
+        <a href="{% url 'products' %}" class="btn">Browse Products</a>
+    </section>
+
+    <section class="featured-products">
+        <h2>Featured Categories</h2>
+        <ul>
+            <li>Processors (CPUs)</li>
+            <li>Graphics Cards (GPUs)</li>
+            <li>Motherboards</li>
+        </ul>
+    </section>
+{% endblock %}
