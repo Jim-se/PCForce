@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="cart-page container">
+    <h1>Your cart</h1>
+
+    <p id="cart-message"></p>
+
+    <div class="cart-list">
+        {% for item in cart_items %}
+            <div class="cart-item card">
+                {% if item.product.image %}
+                    <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                {% endif %}
+
+                <div class="cart-item-info">
+                    <h2>{{ item.product.name }}</h2>
+                    <p>{{ item.product.brand }}</p>
+                    <p>{{ item.product.price }} &euro;</p>
+
+                    <div class="cart-quantity">
+                        <form class="ajax-cart-form" method="POST" action="{% url 'decrease_cart_item' item.product.uuid %}">
+                            {% csrf_token %}
+                            <button class="btn btn-light btn-sm" type="submit">-</button>
+                        </form>
+
+                        <span class="cart-item-quantity">{{ item.quantity }}</span>
+
+                        <form class="ajax-cart-form" method="POST" action="{% url 'increase_cart_item' item.product.uuid %}">
+                            {% csrf_token %}
+                            <button class="btn btn-light btn-sm" type="submit">+</button>
+                        </form>
+                    </div>
+
+                    <form method="POST" action="{% url 'remove_from_cart' item.product.uuid %}">
+                        {% csrf_token %}
+                        <button class="btn btn-dark btn-sm" type="submit">Remove</button>
+                    </form>
+                </div>
+
+                <div class="cart-item-subtotal">
+                    Subtotal: {{ item.subtotal }} &euro;
+                </div>
+            </div>
+        {% empty %}
+            <p>Your cart is empty.</p>
+        {% endfor %}
+    </div>
+
+    {% if cart_items %}
+        <form id="cart-checkout-form" method="POST" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            <button class="btn btn-dark" type="submit">Checkout</button>
+        </form>
+    {% endif %}
+
+    <h2 class="cart-total">Total: <span id="cart-total">{{ total }}</span> &euro;</h2>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{% static 'store/js/cart.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="products-page container">
+    <h1>Products</h1>
+    
+    <form method="GET" action="{% url 'products' %}" class="product-filters">
+    <input class="form-control" type="text" name="q" placeholder="Search products..." value="{{ query|default:'' }}">
+
+    <select class="form-select" name="category">
+        <option value="">All categories</option>
+        {% for category in categories %}
+            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                {{ category.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <input class="form-control" type="text" name="brand" placeholder="Brand" value="{{ brand|default:'' }}">
+
+    <input class="form-control" type="number" name="min_price" placeholder="Min price" value="{{ min_price|default:'' }}">
+    <input class="form-control" type="number" name="max_price" placeholder="Max price" value="{{ max_price|default:'' }}">
+
+    <label class="form-check-label">
+        <input class="form-check-input" type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
+        In stock only
+    </label>
+
+    <select class="form-select" name="sort">
+        <option value="">Default sorting</option>
+        <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+        <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name Z-A</option>
+        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price low to high</option>
+        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price high to low</option>
+    </select>
+
+    <button class="btn btn-dark" type="submit">Apply filters</button>
+    <a class="btn btn-light" href="{% url 'products' %}">Clear</a>
+</form>
+    {% if user.is_authenticated %}
+        {% if user.user_type == 'owner' or user.user_type == 'employee' %}
+            <a class="add-product-button btn btn-dark" href="{% url 'add_product' %}">Add product</a>
+        {% endif %}
+    {% endif %}
+
+    <div class="products-grid">
+        {% for product in products %}
+            <div class="product-card card">
+                {% if product.image %}
+                    <a href="{% url 'product_details' product.uuid %}">
+                        <img class="product-image card-img-top" src="{{ product.image.url }}" alt="{{ product.name }}">
+                    </a>
+                {% endif %}
+
+                <div class="product-info card-body">
+                    <h2>
+                        <a href="{% url 'product_details' product.uuid %}">
+                            {{ product.name }}
+                        </a>
+                    </h2>
+
+                    <p>{{ product.brand }}</p>
+                    <p>{{ product.price }} &euro;</p>
+                    <p>Stock: {{ product.stock }}</p>
+                    {% if product.average_rating %}
+                        <p class="rating-text">Rating: {{ product.average_rating|floatformat:1 }}/5</p>
+                    {% else %}
+                        <p>No ratings yet</p>
+                    {% endif %}   
+                    {% if user.is_authenticated %}
+                        {% if user.user_type == 'customer' %}
+                            {% if product.stock > 0 %}
+                                <form method="POST" action="{% url 'add_to_cart' product.uuid %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-dark btn-sm" type="submit">Add to Cart</button>
+                                </form>
+                            {% else %}
+                                <p>Out of stock</p>
+                            {% endif %}
+                        {% elif user.user_type == 'owner' or user.user_type == 'employee' %}
+                            <a class="btn btn-dark btn-sm" href="{% url 'edit_product' product.uuid %}">Edit product</a>
+                        {% endif %}
+                    {% else %}
+                        <a class="btn btn-dark btn-sm" href="{% url 'auth' %}">Login to add to cart</a>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <p>No products yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

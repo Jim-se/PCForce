@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="product-form-page container">
+    <h1>Edit product</h1>
+
+    <form class="card p-4" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        {{ form.as_p }}
+
+        <button class="btn btn-dark" type="submit">Save changes</button>
+    </form>
+
+    <a class="btn btn-light" href="{% url 'product_details' product.uuid %}">Cancel</a>
+</div>
+{% endblock %}

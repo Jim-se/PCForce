@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <section class="hero-section">
-        <h1>Welcome to PCForge</h1>
+    <section class="hero-section container card p-4">
+        <h1>Welcome to PCForce</h1>
         <p>Your ultimate destination for custom PC building and components.</p>
-        <a href="{% url 'products' %}" class="btn">Browse Products</a>
+        <a href="{% url 'products' %}" class="btn btn-dark">Browse Products</a>
     </section>
 
-    <section class="featured-products">
+    <section class="featured-products container card p-4">
         <h2>Featured Categories</h2>
         <ul>
             <li>Processors (CPUs)</li>
@@ -15,4 +15,34 @@
             <li>Motherboards</li>
         </ul>
     </section>
+
+    {% if recommendation_text %}
+    <h2 class="recommendations-title">Recommended for you</h2>
+    <p class="recommendations-text">{{ recommendation_text }}</p>
+
+    <div class="products-grid recommendations-grid container">
+        {% for product in recommended_products %}
+            <div class="product-card card">
+                {% if product.image %}
+                    <a href="{% url 'product_details' product.uuid %}">
+                        <img class="product-image card-img-top" src="{{ product.image.url }}" alt="{{ product.name }}">
+                    </a>
+                {% endif %}
+
+                <div class="product-info card-body">
+                    <h3>
+                        <a href="{% url 'product_details' product.uuid %}">
+                            {{ product.name }}
+                        </a>
+                    </h3>
+
+                    <p>{{ product.brand }}</p>
+                    <p>{{ product.price }} &euro;</p>
+                </div>
+            </div>
+        {% empty %}
+            <p>Search or filter products to get recommendations.</p>
+        {% endfor %}
+    </div>
+    {% endif %}
 {% endblock %}

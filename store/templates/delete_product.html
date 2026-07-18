@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="delete-product-page container">
+    <h1>Delete product</h1>
+
+    <p>You are about to delete:</p>
+    <h2>{{ product.name }}</h2>
+
+    <p>Type the product name to confirm.</p>
+
+    {% if error %}
+        <p class="error-message">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <input class="form-control" type="text" name="product_name" placeholder="Type product name">
+
+        <button class="btn btn-danger" type="submit">Delete product</button>
+    </form>
+
+    <a class="btn btn-light" href="{% url 'product_details' product.uuid %}">Cancel</a>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="product-detail-page container">
+    <h1>{{ product.name }}</h1>
+
+    {% if product.image %}
+        <img src="{{ product.image.url }}" alt="{{ product.name }}" width="300">
+    {% endif %}
+
+    <p>Brand: {{ product.brand }}</p>
+    <p>Price: {{ product.price }} &euro;</p>
+    <p>Stock: {{ product.stock }}</p>
+    <p>Code: {{ product.code }}</p>
+    <p>{{ product.description }}</p>
+
+    {% if average_rating %}
+        <p id="average-rating">Average rating: {{ average_rating|floatformat:1 }}/5</p>
+    {% else %}
+        <p id="average-rating">No ratings yet</p>
+    {% endif %}
+
+    {% if user.is_authenticated %}
+        {% if user.user_type == 'customer' %}
+            <form method="POST" action="{% url 'add_to_cart' product.uuid %}">
+                {% csrf_token %}
+                <button class="btn btn-dark" type="submit">Add to Cart</button>
+            </form>
+
+            {% if has_reviewed %}
+                <p>You already reviewed this product.</p>
+            {% else %}
+                <h2 id="review-form-title">Write a review</h2>
+
+                <form id="ajax-review-form" method="POST" action="{% url 'add_review' product.uuid %}">
+                    {% csrf_token %}
+
+                    <div class="star-rating">
+                        <button type="button" class="star-button" data-rating="1">&#9733;</button>
+                        <button type="button" class="star-button" data-rating="2">&#9733;</button>
+                        <button type="button" class="star-button" data-rating="3">&#9733;</button>
+                        <button type="button" class="star-button" data-rating="4">&#9733;</button>
+                        <button type="button" class="star-button" data-rating="5">&#9733;</button>
+                    </div>
+
+                    <input type="hidden" name="rating" id="rating-input">
+
+                    <textarea class="form-control" name="comment" placeholder="Write your review..."></textarea>
+
+                    <button class="btn btn-dark" type="submit">Submit review</button>
+                </form>
+
+                <p id="review-message"></p>
+            {% endif %}
+
+        {% elif user.user_type == 'owner' or user.user_type == 'employee' %}
+            <a class="btn btn-dark" href="{% url 'edit_product' product.uuid %}">Edit product</a>
+            <a class="btn btn-danger" href="{% url 'delete_product' product.uuid %}">Delete product</a>
+        {% endif %}
+    {% else %}
+        <a class="btn btn-dark" href="{% url 'auth' %}">Login to add to cart</a>
+    {% endif %}
+
+    <h2>Reviews</h2>
+
+    <div id="reviews-list">
+        {% for review in reviews %}
+            <div class="review-card card">
+                <p>{{ review.rating }}/5</p>
+                <p>{{ review.comment }}</p>
+
+                {% if review.user %}
+                    <p>By {{ review.user.username }}</p>
+                {% else %}
+                    <p>By deleted user</p>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p id="no-reviews-message">No reviews yet.</p>
+        {% endfor %}
+    </div>
+
+    <p>
+        <a class="btn btn-light" href="{% url 'products' %}">Back to products</a>
+    </p>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="{% static 'store/js/review.js' %}"></script>
+{% endblock %}
