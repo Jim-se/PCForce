@@ -515,6 +515,11 @@ class Command(BaseCommand):
             help="Download images again even if a local file already exists.",
         )
         parser.add_argument(
+            "--local-images-only",
+            action="store_true",
+            help="Use existing media/products images only; do not download images.",
+        )
+        parser.add_argument(
             "--sleep",
             type=float,
             default=0.75,
@@ -554,6 +559,7 @@ class Command(BaseCommand):
                     products_dir,
                     options["refresh_images"],
                     options["image_provider"],
+                    options["local_images_only"],
                 )
                 if source:
                     image_sources[product_data["code"]] = source
@@ -574,7 +580,7 @@ class Command(BaseCommand):
                 "description": product_data["description"],
             }
 
-            if image_name:
+            if options["local_images_only"] or image_name:
                 product_values["image"] = image_name
 
             _, created = Product.objects.update_or_create(
@@ -607,12 +613,16 @@ class Command(BaseCommand):
         products_dir,
         refresh_images,
         image_provider,
+        local_images_only,
     ):
         slug = slugify(product_data["code"]).lower()
         existing = self.find_existing_image(products_dir, slug)
 
         if existing and not refresh_images:
             return f"products/{existing.name}", None
+
+        if local_images_only:
+            return "", None
 
         provider_map = {
             "commons": self.search_commons_images,

@@ -4,6 +4,12 @@ __pycache__/
 *.log
 
 db.sqlite3
-media/
+media/*
+!media/products/
+!media/products/*.jpg
+!media/products/*.jpeg
+!media/products/*.png
+!media/products/*.webp
+!media/products/*.svg
 notes.txt
 .env
