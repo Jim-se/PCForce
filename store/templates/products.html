@@ -4,40 +4,56 @@
 <div class="products-page container">
     <h1>Products</h1>
     
-    <form method="GET" action="{% url 'products' %}" class="product-filters">
-    <input class="form-control" type="text" name="q" placeholder="Search products..." value="{{ query|default:'' }}">
+    <form method="GET" action="{% url 'products' %}" class="product-filters row g-2 align-items-center">
+        <div class="col-12 col-lg-3">
+            <input class="form-control" type="text" name="q" placeholder="Search products..." value="{{ query|default:'' }}">
+        </div>
 
-    <select class="form-select" name="category">
-        <option value="">All categories</option>
-        {% for category in categories %}
-            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
-                {{ category.name }}
-            </option>
-        {% endfor %}
-    </select>
+        <div class="col-12 col-sm-6 col-lg-2">
+            <select class="form-select" name="category">
+                <option value="">All categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <input class="form-control" type="text" name="brand" placeholder="Brand" value="{{ brand|default:'' }}">
-    <input class="form-control" type="number" name="min_price" min="0" step="0.01" placeholder="Min price" value="{{ min_price|default:'' }}">
-    <input class="form-control" type="number" name="max_price" min="0" step="0.01" placeholder="Max price" value="{{ max_price|default:'' }}">
+        <div class="col-12 col-sm-6 col-lg-2">
+            <input class="form-control" type="text" name="brand" placeholder="Brand" value="{{ brand|default:'' }}">
+        </div>
 
-    <label class="stock-filter">
-        <input class="form-check-input" type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
-        In stock only
-    </label>
+        <div class="col-6 col-lg-1">
+            <input class="form-control" type="number" name="min_price" min="0" step="0.01" placeholder="Min price" value="{{ min_price|default:'' }}">
+        </div>
 
-    <select class="form-select" name="sort">
-        <option value="">Default sorting</option>
-        <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name A-Z</option>
-        <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name Z-A</option>
-        <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price low to high</option>
-        <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price high to low</option>
-    </select>
+        <div class="col-6 col-lg-1">
+            <input class="form-control" type="number" name="max_price" min="0" step="0.01" placeholder="Max price" value="{{ max_price|default:'' }}">
+        </div>
 
-    <div class="filter-actions">
-        <button class="btn btn-dark" type="submit">Apply</button>
-        <a class="btn btn-light" href="{% url 'products' %}">Clear</a>
-    </div>
-</form>
+        <div class="col-12 col-sm-6 col-lg-auto">
+            <label class="stock-filter">
+                <input class="form-check-input" type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
+                In stock only
+            </label>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-2">
+            <select class="form-select" name="sort">
+                <option value="">Default sorting</option>
+                <option value="name_asc" {% if sort == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+                <option value="name_desc" {% if sort == 'name_desc' %}selected{% endif %}>Name Z-A</option>
+                <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price low to high</option>
+                <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price high to low</option>
+            </select>
+        </div>
+
+        <div class="filter-actions col-12 col-lg-auto">
+            <button class="btn btn-dark" type="submit">Apply</button>
+            <a class="btn btn-light" href="{% url 'products' %}">Clear</a>
+        </div>
+    </form>
     {% if user.is_authenticated %}
         {% if user.user_type == 'owner' or user.user_type == 'employee' %}
             <a class="add-product-button btn btn-dark" href="{% url 'add_product' %}">Add product</a>

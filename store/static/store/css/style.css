@@ -1000,6 +1000,19 @@ main > button {
 }
 
 /* Compact responsive fixes */
+.product-filters.row {
+    display: flex;
+}
+
+.product-filters.row > * {
+    min-width: 0;
+}
+
+.product-filters .form-control,
+.product-filters .form-select {
+    width: 100%;
+}
+
 .product-filters > .form-control,
 .product-filters > .form-select {
     width: auto;
