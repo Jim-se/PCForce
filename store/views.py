@@ -228,6 +228,7 @@ def auth(request):
         return redirect('profile')
 
     signup_form = CustomerSignUpForm()
+    login_error = ''
 
     if request.method == 'POST':
         form_type = request.POST.get('form_type')
@@ -250,9 +251,12 @@ def auth(request):
                 login(request, user)
                 return redirect('profile')
 
-            messages.error(request, 'Invalid username or password.')
+            login_error = 'Invalid username or password.'
 
-    return render(request, 'auth.html', {'signup_form': signup_form})
+    return render(request, 'auth.html', {
+        'signup_form': signup_form,
+        'login_error': login_error
+    })
 
 @login_required(login_url='auth')
 def profile(request):
