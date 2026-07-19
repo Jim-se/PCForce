@@ -49,6 +49,31 @@
     align-items: center;
     gap: 16px;
 }
+
+.footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 16px 40px;
+    margin-top: auto;
+    background-color: #111827;
+    color: white;
+}
+
+.footer p {
+    margin: 0;
+}
+
+.footer-links {
+    display: flex;
+    gap: 20px;
+}
+
+.footer a {
+    color: white;
+    text-decoration: none;
+}
 .products-page {
     padding: 30px;
     max-width: 1100px;
@@ -328,11 +353,71 @@
 }
 
 .product-filters {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 1.2fr 1fr 1fr auto 1.4fr auto;
     gap: 10px;
-    margin-bottom: 24px;
     align-items: center;
+    padding: 16px;
+    margin-bottom: 24px;
+    background-color: white;
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+}
+
+.product-filters .form-control,
+.product-filters .form-select {
+    width: 100%;
+    min-width: 0;
+}
+
+.stock-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+.stock-filter .form-check-input {
+    margin: 0;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-actions .btn {
+    white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+    .product-filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .product-filters {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-actions {
+        width: 100%;
+    }
+
+    .filter-actions .btn {
+        flex: 1;
+    }
+
+    .navbar-search {
+        width: 100%;
+    }
+
+    .navbar-search input {
+        flex: 1;
+        min-width: 0;
+    }
 }
 
 .product-filters input,
@@ -440,6 +525,10 @@
 
 body {
     margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
     background-color: #f5f7fa;
     color: #111827;
     font-family: Arial, Helvetica, sans-serif;
@@ -513,7 +602,61 @@ textarea:focus {
 }
 
 /* Home */
-.hero-section,
+.hero-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 32px;
+    max-width: 1100px;
+    margin: 0 auto 24px;
+    padding: 48px;
+    background-color: white;
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+}
+
+.hero-section h1 {
+    margin: 0 0 16px;
+    font-size: 64px;
+    line-height: 1;
+}
+
+.hero-section p {
+    max-width: 520px;
+    font-size: 20px;
+    color: #4b5563;
+}
+
+.hero-section .btn {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 12px 16px;
+}
+
+.hero-media img {
+    width: 100%;
+    height: 360px;
+    display: block;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.hero-features {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.hero-features div {
+    padding: 16px;
+    border: 1px solid #dde3ea;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    font-weight: 600;
+    text-align: center;
+}
+
 .featured-products {
     max-width: 1000px;
     margin: 0 auto 24px;
@@ -521,22 +664,6 @@ textarea:focus {
     background-color: white;
     border: 1px solid #dde3ea;
     border-radius: 8px;
-}
-
-.hero-section h1 {
-    margin-top: 0;
-    font-size: 36px;
-}
-
-.hero-section p {
-    max-width: 650px;
-    color: #4b5563;
-}
-
-.hero-section .btn {
-    display: inline-block;
-    margin-top: 8px;
-    padding: 10px 14px;
 }
 
 .featured-products ul {
@@ -718,12 +845,43 @@ main > button {
         flex-wrap: wrap;
     }
 
+    .footer {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 16px;
+    }
+
+    .footer-links {
+        flex-wrap: wrap;
+    }
+
     .products-grid {
         grid-template-columns: 1fr;
     }
 
     .product-card {
         width: 100%;
+    }
+
+    .hero-section {
+        grid-template-columns: 1fr;
+        padding: 24px;
+    }
+
+    .hero-section h1 {
+        font-size: 44px;
+    }
+
+    .hero-section p {
+        font-size: 18px;
+    }
+
+    .hero-media img {
+        height: 260px;
+    }
+
+    .hero-features {
+        grid-template-columns: 1fr;
     }
 
     .cart-item {
@@ -741,6 +899,7 @@ main > button {
     background: none;
     color: #9ca3af;
     font-size: 28px;
+    margin: 0 8px 8px 0;
     padding: 0 3px;
 }
 

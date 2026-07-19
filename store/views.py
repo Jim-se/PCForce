@@ -6,6 +6,7 @@ from django.shortcuts import render, redirect
 from .forms import CustomerSignUpForm, ProductForm, ReviewForm, CategoryForm
 from django.db.models import Q, Avg
 from django.http import JsonResponse
+from decimal import Decimal, InvalidOperation
 
 def home(request):
     last_search = request.session.get('last_search')
@@ -21,26 +22,48 @@ def home(request):
         min_price = last_search.get('min_price')
         max_price = last_search.get('max_price')
         in_stock = last_search.get('in_stock')
+        category_id = None
+        min_price_value = None
+        max_price_value = None
+
+        if category and str(category).isdigit():
+            category_id = int(category)
+
+        if min_price:
+            try:
+                min_price_value = Decimal(min_price)
+                if min_price_value < 0:
+                    min_price_value = None
+            except InvalidOperation:
+                min_price_value = None
+
+        if max_price:
+            try:
+                max_price_value = Decimal(max_price)
+                if max_price_value < 0:
+                    max_price_value = None
+            except InvalidOperation:
+                max_price_value = None
 
         recommendation_parts = []
 
         if query:
             recommendation_parts.append(f'search "{query}"')
 
-        if category:
-            category_name = Category.objects.filter(id=category).values_list('name', flat=True).first()
+        if category_id:
+            category_name = Category.objects.filter(id=category_id).values_list('name', flat=True).first()
             if not category_name:
-                category_name = category
+                category_name = 'unknown'
             recommendation_parts.append(f'category "{category_name}"')
 
         if brand:
             recommendation_parts.append(f'brand "{brand}"')
 
-        if min_price:
-            recommendation_parts.append(f'min price {min_price}')
+        if min_price_value is not None:
+            recommendation_parts.append(f'min price {min_price_value}')
 
-        if max_price:
-            recommendation_parts.append(f'max price {max_price}')
+        if max_price_value is not None:
+            recommendation_parts.append(f'max price {max_price_value}')
 
         if in_stock:
             recommendation_parts.append('in-stock products')
@@ -57,17 +80,17 @@ def home(request):
                 Q(description__icontains=query)
             )
 
-        if category:
-            recommended_products = recommended_products.filter(category_id=category)
+        if category_id:
+            recommended_products = recommended_products.filter(category_id=category_id)
 
         if brand:
             recommended_products = recommended_products.filter(brand__icontains=brand)
 
-        if min_price:
-            recommended_products = recommended_products.filter(price__gte=min_price)
+        if min_price_value is not None:
+            recommended_products = recommended_products.filter(price__gte=min_price_value)
 
-        if max_price:
-            recommended_products = recommended_products.filter(price__lte=max_price)
+        if max_price_value is not None:
+            recommended_products = recommended_products.filter(price__lte=max_price_value)
 
         if in_stock:
             recommended_products = recommended_products.filter(stock__gt=0)
@@ -80,7 +103,12 @@ def home(request):
     })
 
 def product_details(request, product_id):
-    product = Product.objects.get(uuid=product_id)
+    try:
+        product = Product.objects.get(uuid=product_id)
+    except Product.DoesNotExist:
+        messages.error(request, 'This product does not exist.')
+        return redirect('products')
+
     reviews = Review.objects.filter(product=product)
     average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
 
@@ -116,6 +144,28 @@ def products(request):
     max_price = request.GET.get('max_price')
     in_stock = request.GET.get('in_stock')
     sort = request.GET.get('sort')
+    category_id = None
+    min_price_value = None
+    max_price_value = None
+
+    if category and category.isdigit():
+        category_id = int(category)
+
+    if min_price:
+        try:
+            min_price_value = Decimal(min_price)
+            if min_price_value < 0:
+                min_price_value = None
+        except InvalidOperation:
+            min_price_value = None
+
+    if max_price:
+        try:
+            max_price_value = Decimal(max_price)
+            if max_price_value < 0:
+                max_price_value = None
+        except InvalidOperation:
+            max_price_value = None
 
     if query or category or brand or min_price or max_price or in_stock:
         request.session['last_search'] = {
@@ -136,29 +186,30 @@ def products(request):
             Q(description__icontains=query)
         )
 
-    if category:
-        products = products.filter(category_id=category)
+    if category_id:
+        products = products.filter(category_id=category_id)
 
     if brand:
         products = products.filter(brand__icontains=brand)
 
-    if min_price:
-        products = products.filter(price__gte=min_price)
+    if min_price_value is not None:
+        products = products.filter(price__gte=min_price_value)
 
-    if max_price:
-        products = products.filter(price__lte=max_price)
+    if max_price_value is not None:
+        products = products.filter(price__lte=max_price_value)
 
     if in_stock:
         products = products.filter(stock__gt=0)
 
-    if sort == 'name_asc':
-        products = products.order_by('name')
-    elif sort == 'name_desc':
-        products = products.order_by('-name')
-    elif sort == 'price_asc':
-        products = products.order_by('price')
-    elif sort == 'price_desc':
-        products = products.order_by('-price')
+    sort_options = {
+        'name_asc': 'name',
+        'name_desc': '-name',
+        'price_asc': 'price',
+        'price_desc': '-price',
+    }
+
+    if sort in sort_options:
+        products = products.order_by(sort_options[sort])
 
     return render(request, 'products.html', {
         'products': products,

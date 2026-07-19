@@ -17,11 +17,10 @@
     </select>
 
     <input class="form-control" type="text" name="brand" placeholder="Brand" value="{{ brand|default:'' }}">
+    <input class="form-control" type="number" name="min_price" min="0" step="0.01" placeholder="Min price" value="{{ min_price|default:'' }}">
+    <input class="form-control" type="number" name="max_price" min="0" step="0.01" placeholder="Max price" value="{{ max_price|default:'' }}">
 
-    <input class="form-control" type="number" name="min_price" placeholder="Min price" value="{{ min_price|default:'' }}">
-    <input class="form-control" type="number" name="max_price" placeholder="Max price" value="{{ max_price|default:'' }}">
-
-    <label class="form-check-label">
+    <label class="stock-filter">
         <input class="form-check-input" type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}>
         In stock only
     </label>
@@ -34,8 +33,10 @@
         <option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price high to low</option>
     </select>
 
-    <button class="btn btn-dark" type="submit">Apply filters</button>
-    <a class="btn btn-light" href="{% url 'products' %}">Clear</a>
+    <div class="filter-actions">
+        <button class="btn btn-dark" type="submit">Apply</button>
+        <a class="btn btn-light" href="{% url 'products' %}">Clear</a>
+    </div>
 </form>
     {% if user.is_authenticated %}
         {% if user.user_type == 'owner' or user.user_type == 'employee' %}
