@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block content %}
-<div class="container">
+<div class="container profile-page">
     <h1>Profile</h1>
     {% if user.user_type == 'customer' %}
         <h2>Hello, {{ user.username }}!</h2>
@@ -75,8 +75,8 @@
         {% endfor %}
     {% endif %}
     {% if user.user_type == 'owner' or user.user_type == 'employee' %}
-    <div class="category-panel card p-3">
-        <h3>Categories</h3>
+    <details class="category-panel card p-3">
+        <summary>Categories</summary>
         <p id="category-message"></p>
 
         <form id="ajax-add-category-form" method="POST" action="{% url 'add_category' %}">
@@ -85,6 +85,7 @@
             <button class="btn btn-dark btn-sm" type="submit">Add category</button>
         </form>
 
+        <div class="category-list">
         {% for category in categories %}
             <div class="category-row" data-category-id="{{ category.id }}">
                 <form class="ajax-edit-category-form" method="POST" action="{% url 'edit_category' category.id %}">
@@ -101,7 +102,8 @@
         {% empty %}
             <p>No categories found.</p>
         {% endfor %}
-    </div>
+        </div>
+    </details>
 {% endif %}
     <div id="orders-section" hidden>
     <h2>Orders</h2>

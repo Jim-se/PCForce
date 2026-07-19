@@ -62,7 +62,7 @@ $('#ajax-add-category-form').on('submit', function (event) {
                 </div>
             `;
 
-            $('.category-panel').append(row);
+            $('.category-list').append(row);
             form.find('input[name="name"]').val('');
         },
         error: function (response) {
