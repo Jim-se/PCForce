@@ -8,14 +8,18 @@ from django.db.models import Q, Avg
 from django.http import JsonResponse
 from decimal import Decimal, InvalidOperation
 
+
+# Home page: shows the main page and uses the last product search for suggestions.
 def home(request):
     last_search = request.session.get('last_search')
     recommended_products = Product.objects.none()
     recommendation_text = ''
 
     if last_search:
+        # Start with products that have ratings, so better-rated items can come first.
         recommended_products = Product.objects.annotate(average_rating=Avg('review__rating')).order_by('-average_rating')
 
+        # Get the filters the user used last time.
         query = last_search.get('q')
         category = last_search.get('category')
         brand = last_search.get('brand')
@@ -26,6 +30,7 @@ def home(request):
         min_price_value = None
         max_price_value = None
 
+        # Make sure category and price values are usable before filtering.
         if category and str(category).isdigit():
             category_id = int(category)
 
@@ -47,6 +52,7 @@ def home(request):
 
         recommendation_parts = []
 
+        # Make a short message explaining where the suggestions came from.
         if query:
             recommendation_parts.append(f'search "{query}"')
 
@@ -71,6 +77,7 @@ def home(request):
         recommendation_text = 'Based on your last search: ' + ', '.join(recommendation_parts)
 
 
+        # Reuse the same filters to find similar products.
         if query:
             recommended_products = recommended_products.filter(
                 Q(name__icontains=query) |
@@ -95,6 +102,7 @@ def home(request):
         if in_stock:
             recommended_products = recommended_products.filter(stock__gt=0)
 
+        # Keep the homepage clean by showing only 4 suggestions.
         recommended_products = recommended_products[:4]
 
     return render(request, 'home.html', {
@@ -102,13 +110,18 @@ def home(request):
         'recommendation_text': recommendation_text
     })
 
+
+# Product details page: shows one product, its reviews, and its rating.
 def product_details(request, product_id):
     try:
+        # Find the product from the id in the URL.
         product = Product.objects.get(uuid=product_id)
     except Product.DoesNotExist:
+        # If the product was deleted or the URL is wrong, send the user back.
         messages.error(request, 'This product does not exist.')
         return redirect('products')
 
+    # Get all reviews and calculate the average rating.
     reviews = Review.objects.filter(product=product)
     average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
 
@@ -127,16 +140,22 @@ def product_details(request, product_id):
         'has_reviewed': has_reviewed
     })
 
+
+# Simple pages that only render a template.
 def contact(request):
     return render(request, 'contact.html')
 
 def about(request):
     return render(request, 'about.html')
 
+
+# Products page: shows products and lets the user filter/sort them.
 def products(request):
+    # Start with all products and include each product rating.
     products = Product.objects.annotate(average_rating=Avg('review__rating'))
     categories = Category.objects.all().order_by('name')
 
+    # Read what the user typed or selected in the filter form.
     query = request.GET.get('q')
     category = request.GET.get('category')
     brand = request.GET.get('brand')
@@ -148,6 +167,7 @@ def products(request):
     min_price_value = None
     max_price_value = None
 
+    # Clean up category and price inputs before using them.
     if category and category.isdigit():
         category_id = int(category)
 
@@ -167,6 +187,7 @@ def products(request):
         except InvalidOperation:
             max_price_value = None
 
+    # Remember this search so the home page can suggest similar products later.
     if query or category or brand or min_price or max_price or in_stock:
         request.session['last_search'] = {
             'q': query,
@@ -177,6 +198,7 @@ def products(request):
             'in_stock': in_stock,
         }
 
+    # Search in name, brand, category, code, and description.
     if query:
         products = products.filter(
             Q(name__icontains=query) |
@@ -201,6 +223,7 @@ def products(request):
     if in_stock:
         products = products.filter(stock__gt=0)
 
+    # Only use sorting choices that the site supports.
     sort_options = {
         'name_asc': 'name',
         'name_desc': '-name',
@@ -223,6 +246,8 @@ def products(request):
         'categories': categories,
     })
 
+
+# Login/register page.
 def auth(request):
     if request.user.is_authenticated:
         return redirect('profile')
@@ -231,6 +256,7 @@ def auth(request):
     login_error = ''
 
     if request.method == 'POST':
+        # The page has login and signup, so this checks which form was used.
         form_type = request.POST.get('form_type')
 
         if form_type == 'signup':
@@ -258,15 +284,22 @@ def auth(request):
         'login_error': login_error
     })
 
+
+# Profile page: shows account info, orders, and staff tools.
 @login_required(login_url='auth')
 def profile(request):
     users = None
     categories = None
 
+    # Only owners can see and manage other users.
     if request.user.user_type == 'owner':
         users = User.objects.exclude(id=request.user.id)
+
+    # Staff users can see the category tools.
     if request.user.user_type in ['owner', 'employee']:
         categories = Category.objects.all().order_by('name')
+
+    # Staff see every order, customers only see their own.
     if request.user.user_type in ['owner', 'employee']:
         orders = Order.objects.all().order_by('-created_at')
     else:
@@ -279,18 +312,20 @@ def profile(request):
     })
 
 
+# Log out and go back home.
 def logout_user(request):
     logout(request)
     return redirect('home')
 
 
-
+# Add product page for employees and owners.
 @login_required(login_url='auth')
 def add_product(request):
     if request.user.user_type not in ['owner', 'employee']:
         return redirect('products')
 
     if request.method == 'POST':
+        # Include uploaded files because products can have images.
         form = ProductForm(request.POST, request.FILES)
 
         if form.is_valid():
@@ -301,6 +336,8 @@ def add_product(request):
 
     return render(request, 'add_product.html', {'form': form})
 
+
+# Owner tools for changing a user role.
 @login_required(login_url='auth')
 def make_employee(request, user_id):
     if request.user.user_type != 'owner':
@@ -325,6 +362,8 @@ def make_customer(request, user_id):
 
     return redirect('profile')
 
+
+# Cart features for customers.
 @login_required(login_url='auth')
 def add_to_cart(request, product_id):
     if request.user.user_type != 'customer':
@@ -332,6 +371,7 @@ def add_to_cart(request, product_id):
 
     product = Product.objects.get(uuid=product_id)
 
+    # Do not add the product if it is out of stock.
     if product.stock <= 0:
         messages.error(request, 'This product is out of stock.')
         return redirect('products')
@@ -341,6 +381,7 @@ def add_to_cart(request, product_id):
         product=product
     )
 
+    # If it is already in the cart, just add 1 more if stock allows it.
     if not created:
         if cart_item.quantity < product.stock:
             cart_item.quantity += 1
@@ -356,6 +397,7 @@ def cart(request):
 
     total = 0
 
+    # Work out each item subtotal for the cart page.
     for item in cart_items:
         item.subtotal = item.product.price * item.quantity
         total += item.subtotal
@@ -397,6 +439,7 @@ def increase_cart_item(request, product_id):
     if not cart_item:
         return JsonResponse({'success': False, 'message': 'Item not found.'}, status=404)
 
+    # This is used by the plus button, so it returns JSON for JavaScript.
     if cart_item.quantity < product.stock:
         cart_item.quantity += 1
         cart_item.save()
@@ -407,6 +450,8 @@ def increase_cart_item(request, product_id):
         }, status=400)
 
     cart_total = 0
+
+    # Update the cart total after changing quantity.
     for item in CartItem.objects.filter(user=request.user):
         cart_total += item.product.price * item.quantity
 
@@ -436,6 +481,7 @@ def decrease_cart_item(request, product_id):
 
     removed = False
 
+    # If the user goes below 1, remove the item from the cart.
     if cart_item.quantity > 1:
         cart_item.quantity -= 1
         cart_item.save()
@@ -444,6 +490,8 @@ def decrease_cart_item(request, product_id):
         removed = True
 
     cart_total = 0
+
+    # Send the new total back so the page updates without reloading.
     for item in CartItem.objects.filter(user=request.user):
         cart_total += item.product.price * item.quantity
 
@@ -464,6 +512,8 @@ def decrease_cart_item(request, product_id):
         'cart_total': f'{cart_total:.2f}'
     })
 
+
+# Edit/delete product tools for employees and owners.
 @login_required(login_url='auth')
 def delete_product(request, product_id):
     if request.user.user_type not in ['owner', 'employee']:
@@ -474,6 +524,7 @@ def delete_product(request, product_id):
     if request.method == 'POST':
         typed_name = request.POST.get('product_name')
 
+        # Extra safety: the user must type the product name before deleting.
         if typed_name == product.name:
             product.delete()
             return redirect('products')
@@ -508,6 +559,8 @@ def edit_product(request, product_id):
         'product': product
     })
 
+
+# Lets the logged-in user update their profile details.
 @login_required(login_url='auth')
 def edit_profile(request):
     if request.method == 'POST':
@@ -519,6 +572,8 @@ def edit_profile(request):
 
     return redirect('profile')
 
+
+# Add reviews without refreshing the product page.
 @login_required(login_url='auth')
 def add_review(request, product_id):
     if request.user.user_type != 'customer':
@@ -529,6 +584,7 @@ def add_review(request, product_id):
 
     product = Product.objects.get(uuid=product_id)
 
+    # Stop the same customer from reviewing the same product twice.
     if Review.objects.filter(product=product, user=request.user).exists():
         return JsonResponse({
             'success': False,
@@ -539,6 +595,7 @@ def add_review(request, product_id):
         form = ReviewForm(request.POST)
 
         if form.is_valid():
+            # Add the current user and product to the review before saving.
             review = form.save(commit=False)
             review.product = product
             review.user = request.user
@@ -548,6 +605,7 @@ def add_review(request, product_id):
                 Avg('rating')
             )['rating__avg']
 
+            # Send back the new rating so the page can update straight away.
             return JsonResponse({
                 'success': True,
                 'message': 'Review submitted successfully.',
@@ -564,6 +622,8 @@ def add_review(request, product_id):
 
     return redirect('product_details', product_id=product.uuid)
 
+
+# Checkout turns the cart into an order.
 @login_required(login_url='auth')
 def checkout(request):
     if request.user.user_type != 'customer':
@@ -577,15 +637,18 @@ def checkout(request):
 
     total = 0
 
+    # Add up the full cart total.
     for item in cart_items:
         total += item.product.price * item.quantity
 
+    # Create the main order record.
     order = Order.objects.create(
         user=request.user,
         total=total,
         status='completed'
     )
 
+    # Save each cart item into the order and reduce stock.
     for item in cart_items:
         OrderItem.objects.create(
             order=order,
@@ -598,11 +661,14 @@ def checkout(request):
         item.product.stock -= item.quantity
         item.product.save()
 
+    # Clear the cart when checkout is done.
     cart_items.delete()
 
     messages.success(request, 'Checkout completed successfully.')
     return redirect('profile')
 
+
+# Staff can update order status without reloading the page.
 @login_required(login_url='auth')
 def update_order_status(request, order_id):
     if request.user.user_type not in ['owner', 'employee']:
@@ -616,6 +682,7 @@ def update_order_status(request, order_id):
     if request.method == 'POST':
         status = request.POST.get('status')
 
+        # Only save statuses that actually exist in the model.
         if status in ['pending', 'completed', 'cancelled']:
             order.status = status
             order.save()
@@ -633,6 +700,8 @@ def update_order_status(request, order_id):
 
     return redirect('profile')
 
+
+# Category tools used from the profile page.
 @login_required(login_url='auth')
 def add_category(request):
     if request.user.user_type not in ['owner', 'employee']:
@@ -645,6 +714,7 @@ def add_category(request):
         form = CategoryForm(request.POST)
 
         if form.is_valid():
+            # Send the new category back so it appears instantly.
             category = form.save()
 
             return JsonResponse({
@@ -675,6 +745,7 @@ def edit_category(request, category_id):
         form = CategoryForm(request.POST, instance=category)
 
         if form.is_valid():
+            # Send the edited category back to update the page.
             category = form.save()
 
             return JsonResponse({
@@ -702,6 +773,7 @@ def delete_category(request, category_id):
     category = Category.objects.get(id=category_id)
 
     if request.method == 'POST':
+        # Deleting a category does not delete the products inside it.
         category.delete()
 
         return JsonResponse({

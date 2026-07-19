@@ -63,11 +63,15 @@
     <div class="products-grid">
         {% for product in products %}
             <div class="product-card card">
-                {% if product.image %}
-                    <a href="{% url 'product_details' product.uuid %}">
+                <a class="product-image-link" href="{% url 'product_details' product.uuid %}">
+                    {% if product.image %}
                         <img class="product-image card-img-top" src="{{ product.image.url }}" alt="{{ product.name }}">
-                    </a>
-                {% endif %}
+                    {% else %}
+                        <div class="product-image product-image-placeholder card-img-top">
+                            <span>{{ product.name }}</span>
+                        </div>
+                    {% endif %}
+                </a>
 
                 <div class="product-info card-body">
                     <h2>

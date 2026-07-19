@@ -499,6 +499,23 @@ PRODUCTS = [
     },
 ]
 
+CATEGORY_FALLBACK_IMAGES = {
+    "Processors": "cpu-amd-7600.jpg",
+    "Graphics Cards": "gpu-rx-7800xt.jpg",
+    "Motherboards": "mb-asus-b650.jpg",
+    "Memory": "ram-corsair-rgb-32.jpg",
+    "Storage": "hdd-seagate-2tb.jpg",
+    "Power Supplies": "psu-corsair-rm750e.jpg",
+    "Cases": "case-corsair-4000d.jpg",
+    "Cooling": "cool-corsair-h100i.jpg",
+    "Monitors": "mon-dell-g2724d.png",
+    "Keyboards": "key-keychron-k2.jpg",
+    "Mice": "mou-logi-mx3s.jpg",
+    "Headsets": "head-steelseries-nova3.png",
+    "Networking": "net-netgear-gs308.png",
+    "Laptops": "lap-asus-tuf-a15.jpg",
+}
+
 
 class Command(BaseCommand):
     help = "Seed the store with PCForce products and local product images."
@@ -622,6 +639,9 @@ class Command(BaseCommand):
             return f"products/{existing.name}", None
 
         if local_images_only:
+            fallback = self.find_category_fallback(products_dir, product_data["category"])
+            if fallback:
+                return f"products/{fallback.name}", None
             return "", None
 
         provider_map = {
@@ -836,6 +856,17 @@ class Command(BaseCommand):
             image_path = products_dir / f"{slug}{image_ext}"
             if image_path.exists() and image_path.stat().st_size > 0:
                 return image_path
+
+        return None
+
+    def find_category_fallback(self, products_dir, category):
+        image_name = CATEGORY_FALLBACK_IMAGES.get(category)
+        if not image_name:
+            return None
+
+        image_path = products_dir / image_name
+        if image_path.exists() and image_path.stat().st_size > 0:
+            return image_path
 
         return None
 
